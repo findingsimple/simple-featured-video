@@ -392,17 +392,17 @@ class Simple_Featured_Video {
 		
 		if ( is_admin() )
 			return $meta_value;
-		
-		if ( $meta_key != '_thumbnail_id')
+				
+		if ( !isset( $meta_key ) || ( $meta_key != '_thumbnail_id' ) )
 			return $meta_value;
 
 		$override = esc_attr( get_post_meta( $post_id , '_simple_featured_video_override' , true ) );
 							
 		if ( $override != 'yes' )
-			return $meta_value;
-						
+		 	return $meta_value;
+		 	
 		$meta_value = get_post_meta( $post_id , '_simple_featured_video_attachment_id' , true );
-				
+		
 		return $meta_value;
 
 	}	
