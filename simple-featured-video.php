@@ -94,20 +94,20 @@ class Simple_Featured_Video {
 		
 		wp_nonce_field( basename( __FILE__ ), 'simple-featured-video-nonce' );
 								
-		$featured_video_link = esc_attr( get_post_meta( $object->ID, '_simple_featured_video_link' , true) ); 
+		$featured_video_url = esc_attr( get_post_meta( $object->ID, '_simple_featured_video_url' , true) ); 
 		
-		$featured_video_thumbnail = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_thumbnail' , true ) );
+		$featured_video_thumbnail_url = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_thumbnail_url' , true ) );
 																					
 	?>		
 		
-		<?php if ( !empty( $featured_video_thumbnail ) ) { ?>
-		<a href="<?php echo $featured_video_link; ?>" title="" target="_blank" style="display:block;padding-top:4px;" ><img src='<?php echo $featured_video_thumbnail; ?>' alt='' style="display:block;width:100%;" /></a>
+		<?php if ( !empty( $featured_video_thumbnail_url ) ) { ?>
+		<a href="<?php echo $featured_video_url; ?>" title="" target="_blank" style="display:block;padding-top:4px;" ><img src='<?php echo $featured_video_thumbnail_url; ?>' alt='' style="display:block;width:100%;" /></a>
 		<?php } ?>
 		
 		<p>
-			<label for="featured-video-link"><?php _e( 'Video Link:', self::$text_domain ); ?></label>
+			<label for="featured-video-url"><?php _e( 'Video URI:', self::$text_domain ); ?></label>
 			<br />
-			<input name='featured-video-link' id='featured-video-link' value='<?php echo $featured_video_link ?>' class="widefat" />	
+			<input name='featured-video-url' id='featured-video-url' value='<?php echo $featured_video_url ?>' class="widefat" />	
 			<br />
 			<span style="color:#aaa;">Supports Youtube and Vimeo (non vanity urls)</span>
 		</p>
@@ -141,8 +141,8 @@ class Simple_Featured_Video {
 			return $post_id;
 
 		$meta = array(
-			'_simple_featured_video_link' => strip_tags( $_POST['featured-video-link'] ),
-			'_simple_featured_video_thumbnail' => self::maybe_get_video_thumbnail_uri( strip_tags( $_POST['featured-video-link'] ) , $post_id )
+			'_simple_featured_video_url' => strip_tags( $_POST['featured-video-url'] ),
+			'_simple_featured_video_thumbnail_url' => self::maybe_get_video_thumbnail_uri( strip_tags( $_POST['featured-video-url'] ) , $post_id )
 		);
 		
 		foreach ( $meta as $meta_key => $new_meta_value ) {
@@ -174,11 +174,11 @@ class Simple_Featured_Video {
 	 */
 	function maybe_get_video_thumbnail_uri( $video_uri, $post_id ) {
 	
-		$current_video_uri = get_post_meta( $post_id , '_simple_featured_video_link' , true );
+		$current_video_uri = get_post_meta( $post_id , '_simple_featured_video_url' , true );
 		
 		// if the video hasn't changed don't re-determine the thumbnail url
 		if ( $current_video_uri == $video_uri ) {
-			return get_post_meta( $post_id , '_simple_featured_video_thumbnail' , true );
+			return get_post_meta( $post_id , '_simple_featured_video_thumbnail_url' , true );
 		} else {		
 			return self::get_video_thumbnail_uri( $video_uri ); 
 		}
