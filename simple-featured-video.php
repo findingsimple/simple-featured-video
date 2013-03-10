@@ -71,6 +71,9 @@ class Simple_Featured_Video {
 		/* Override thumbnail id */
 		add_filter( 'get_post_metadata', array( __CLASS__, 'override_thumbnail' ) , 10, 4 );
 		
+		/* Link thumbnail to the video */
+		add_filter( 'post_thumbnail_html', array( __CLASS__, 'link_thumbnail' ), 10, 5 );
+
 	}
 
 	/* Adds custom meta boxes to the theme settings page. */
@@ -102,6 +105,8 @@ class Simple_Featured_Video {
 		$featured_video_thumbnail_url = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_thumbnail_url' , true ) );
 		
 		$override_featured_image = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_override' , true ) );
+		
+		$featured_video_link_to_video = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_link_to_video' , true ) );
 																					
 	?>		
 		
@@ -120,6 +125,11 @@ class Simple_Featured_Video {
 			<label for="override-featured-image" class="selectit">
 			<input name="override-featured-image" type="checkbox" id="override-featured-image" value="yes" <?php checked( $override_featured_image, 'yes', true ); ?>/>
 			<?php _e( 'Override Featured Image', self::$text_domain ); ?></label>
+		</p>
+		<p>
+			<label for="featured-video-link-to-video" class="selectit">
+			<input name="featured-video-link-to-video" type="checkbox" id="featured-video-link-to-video" value="yes" <?php checked( $featured_video_link_to_video, 'yes', true ); ?>/>
+			<?php _e( 'Link to featured video', self::$text_domain ); ?></label>
 		</p>
 						
 	<?php
@@ -156,6 +166,7 @@ class Simple_Featured_Video {
 		$meta['_simple_featured_video_thumbnail_url'] = self::maybe_get_video_thumbnail_uri( $meta['_simple_featured_video_url'] , $post_id );
 		$meta['_simple_featured_video_attachment_id'] = self::maybe_attach_video_thumbnail( $meta['_simple_featured_video_url'], $meta['_simple_featured_video_thumbnail_url'] , $post_id );
 		$meta['_simple_featured_video_override'] = strip_tags( $_POST['override-featured-image'] );
+		$meta['_simple_featured_video_link_to_video'] = strip_tags( $_POST['featured-video-link-to-video'] );
 
 		foreach ( $meta as $meta_key => $new_meta_value ) {
 
@@ -405,7 +416,50 @@ class Simple_Featured_Video {
 		
 		return $meta_value;
 
-	}	
+	}
+
+	/**
+	 * Filter to wrap thumbnail in anchor tag/s to link to video
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */	 	
+	public static function link_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr ) {
+		
+		$override = esc_attr( get_post_meta( $post_id , '_simple_featured_video_override' , true ) );
+		
+		$featured_video_link_to_video = esc_attr( get_post_meta( $post_id , '_simple_featured_video_link_to_video' , true ) );
+
+		if ( ( $override != 'yes' ) || ( $featured_video_link_to_video != 'yes' )  )
+		 	return $html;	
+		
+		$video = self::parse_video_uri( get_post_meta( $post_id , '_simple_featured_video_url' , true ) );		
+		
+		if ( $video['type'] == 'youtube' )
+			$url = 'http://www.youtube.com/embed/'. $video['id'] .'?rel=0';
+			
+		if ( $video['type'] == 'vimeo' )
+			$url = 'http://player.vimeo.com/video/'. $video['id'] ;
+		
+		/* Check for existing <a></a> tags - e.g. embedded by Justin Tadlock's "Get The Image" plugin/extension */
+		if ( strpos( $html , '<a href=' ) === false ) {
+						
+			$html = '<a class="feature-video" href="' . $url . '" >' . $html . $tail;
+		
+		} else {
+
+			$pattern = "/(?<=href=(\"|'))[^\"']+(?=(\"|'))/";
+			$html = preg_replace( $pattern, $url, $html );	
+			$html = str_replace( '<a href=', '<a class="feature-video" href=', $html );	
+		
+		}
+
+		return $html;
+		
+	}
+	
+	
+	
 	
 }
 
