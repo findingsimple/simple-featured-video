@@ -68,6 +68,8 @@ class Simple_Featured_Video {
 		/* Save the meta boxes data on the 'save_post' hook. */
 		add_action( 'save_post', array( __CLASS__, 'simple_featured_video_save' ) , 10, 2 );
 		
+		//add_filter( 'post_thumbnail_html', array( __CLASS__, 'override_thumbnail' ) , 10, 5 );
+		
 	}
 
 	/* Adds custom meta boxes to the theme settings page. */
@@ -140,10 +142,13 @@ class Simple_Featured_Video {
 		if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
 			return $post_id;
 
-		$meta = array(
-			'_simple_featured_video_url' => strip_tags( $_POST['featured-video-url'] ),
-			'_simple_featured_video_thumbnail_url' => self::maybe_get_video_thumbnail_uri( strip_tags( $_POST['featured-video-url'] ) , $post_id )
-		);
+		$meta = array();
+		
+		$meta['_simple_featured_video_url'] = strip_tags( $_POST['featured-video-url'] );
+		$meta['_simple_featured_video_thumbnail_url'] = self::maybe_get_video_thumbnail_uri( $meta['_simple_featured_video_url'] , $post_id );
+		$meta['_simple_featured_video_attachment_id'] = self::maybe_attach_video_thumbnail( $meta['_simple_featured_video_url'], $meta['_simple_featured_video_thumbnail_url'] , $post_id );
+		
+		var_dump($meta['_simple_featured_video_attachment_id']);
 		
 		foreach ( $meta as $meta_key => $new_meta_value ) {
 
@@ -172,7 +177,7 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason Conroy
 	 */
-	function maybe_get_video_thumbnail_uri( $video_uri, $post_id ) {
+	public static function maybe_get_video_thumbnail_uri( $video_uri, $post_id ) {
 	
 		$current_video_uri = get_post_meta( $post_id , '_simple_featured_video_url' , true );
 		
@@ -184,6 +189,25 @@ class Simple_Featured_Video {
 		}
 				
 	}
+	
+	/**
+	 * X
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */
+	public static function maybe_attach_video_thumbnail( $video_uri, $thumbnail_uri, $post_id ) {
+	
+		$current_video_uri = get_post_meta( $post_id , '_simple_featured_video_url' , true );
+		
+		// if the video hasn't changed don't re-attach the thumbnail
+		if ( $current_video_uri == $video_uri ) {
+			return get_post_meta( $post_id , '_simple_featured_video_attachment_id' , true );
+		} else {		
+			return self::attach_video_thumbnail( $video_uri, $thumbnail_uri, $post_id ); 
+		}
+				
+	}
 
 	/**
 	 * XXX
@@ -191,7 +215,7 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason COnroy
 	 */
-	function get_video_thumbnail_uri( $video_uri ) {
+	public static function get_video_thumbnail_uri( $video_uri ) {
 	
 		$thumbnail_uri = '';
 		
@@ -221,7 +245,7 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason COnroy
 	 */
-	function parse_video_uri( $url ) {
+	public static function parse_video_uri( $url ) {
 		
 		// Parse the url 
 		$parse = parse_url( $url );
@@ -292,7 +316,7 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Brent Shepherd
 	 */
-	function get_vimeo_thumbnail_uri( $clip_id ) {
+	public static function get_vimeo_thumbnail_uri( $clip_id ) {
 
 		$vimeo_api_uri = 'http://vimeo.com/api/v2/video/' . $clip_id . '.php';
 
@@ -305,7 +329,82 @@ class Simple_Featured_Video {
 			return $vimeo_response[0]['thumbnail_large'];
 		}
 		
+	}
+
+	/**
+	 * Attach the thumbnail image to the post and return attachment id
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */
+	public static function attach_video_thumbnail( $video_uri, $thumbnail_uri, $post_id ) {
+
+		$image = media_sideload_image( $thumbnail_uri, $post_id );
+
+		// Remove unwanted HTML, keep just a plain URL (or whatever is in the image src="..." )
+		$image = preg_replace("/.*(?<=src=[\"'])([^\"']*)(?=[\"']).*/", '$1', $image);
+				
+		$attachment_id = self::get_attachment_id_from_src( $image );
+		
+		if ( !empty( $attachment_id ) )
+			return $attachment_id;
+		else
+			return false;
+		
 	}	
+
+	/**
+	 * Get attachment id from image src.
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */	
+    public static function get_attachment_id_from_src( $image_src ) {
+    
+		global $wpdb;
+		
+		$query = $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_src );
+		
+		$id = $wpdb->get_var($query);
+		
+		if ( !empty( $id ) )
+			return $id;
+		else
+			return false;
+		
+    }
+ 
+
+	/**
+	 * Filter to override the thumbnail
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */	    
+	public static function override_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr ) {
+			
+		$post_thumbnail_id = get_post_meta( $post_id , '_simple_featured_video_attachment_id' , true );
+				
+		if ( $post_thumbnail_id ) {
+		
+			do_action( 'begin_fetch_post_thumbnail_html', $post_id, $post_thumbnail_id, $size ); // for "Just In Time" filtering of all of wp_get_attachment_image()'s filters
+			
+			if ( in_the_loop() )
+				update_post_thumbnail_cache();
+				
+			$html = wp_get_attachment_image( $post_thumbnail_id, $size, false, $attr );
+			
+			do_action( 'end_fetch_post_thumbnail_html', $post_id, $post_thumbnail_id, $size );
+			
+		} else {
+		
+			$html = '';
+			
+		}
+		
+		return $html;
+
+	}
 	
 	
 }
