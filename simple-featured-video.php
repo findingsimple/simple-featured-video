@@ -68,7 +68,8 @@ class Simple_Featured_Video {
 		/* Save the meta boxes data on the 'save_post' hook. */
 		add_action( 'save_post', array( __CLASS__, 'simple_featured_video_save' ) , 10, 2 );
 		
-		//add_filter( 'post_thumbnail_html', array( __CLASS__, 'override_thumbnail' ) , 10, 5 );
+		/* Override thumbnail id */
+		add_filter( 'get_post_metadata', array( __CLASS__, 'override_thumbnail' ) , 10, 4 );
 		
 	}
 
@@ -99,6 +100,8 @@ class Simple_Featured_Video {
 		$featured_video_url = esc_attr( get_post_meta( $object->ID, '_simple_featured_video_url' , true) ); 
 		
 		$featured_video_thumbnail_url = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_thumbnail_url' , true ) );
+		
+		$override_featured_image = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_override' , true ) );
 																					
 	?>		
 		
@@ -112,6 +115,11 @@ class Simple_Featured_Video {
 			<input name='featured-video-url' id='featured-video-url' value='<?php echo $featured_video_url ?>' class="widefat" />	
 			<br />
 			<span style="color:#aaa;">Supports Youtube and Vimeo (non vanity urls)</span>
+		</p>
+		<p>
+			<label for="override-featured-image" class="selectit">
+			<input name="override-featured-image" type="checkbox" id="override-featured-image" value="yes" <?php checked( $override_featured_image, 'yes', true ); ?>/>
+			<?php _e( 'Override Featured Image', self::$text_domain ); ?></label>
 		</p>
 						
 	<?php
@@ -147,9 +155,8 @@ class Simple_Featured_Video {
 		$meta['_simple_featured_video_url'] = strip_tags( $_POST['featured-video-url'] );
 		$meta['_simple_featured_video_thumbnail_url'] = self::maybe_get_video_thumbnail_uri( $meta['_simple_featured_video_url'] , $post_id );
 		$meta['_simple_featured_video_attachment_id'] = self::maybe_attach_video_thumbnail( $meta['_simple_featured_video_url'], $meta['_simple_featured_video_thumbnail_url'] , $post_id );
-		
-		var_dump($meta['_simple_featured_video_attachment_id']);
-		
+		$meta['_simple_featured_video_override'] = strip_tags( $_POST['override-featured-image'] );
+
 		foreach ( $meta as $meta_key => $new_meta_value ) {
 
 			/* Get the meta value of the custom field key. */
@@ -381,31 +388,24 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason Conroy
 	 */	    
-	public static function override_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr ) {
-			
-		$post_thumbnail_id = get_post_meta( $post_id , '_simple_featured_video_attachment_id' , true );
-				
-		if ( $post_thumbnail_id ) {
+	public static function override_thumbnail( $meta_value, $post_id, $meta_key, $single ) {
 		
-			do_action( 'begin_fetch_post_thumbnail_html', $post_id, $post_thumbnail_id, $size ); // for "Just In Time" filtering of all of wp_get_attachment_image()'s filters
-			
-			if ( in_the_loop() )
-				update_post_thumbnail_cache();
-				
-			$html = wp_get_attachment_image( $post_thumbnail_id, $size, false, $attr );
-			
-			do_action( 'end_fetch_post_thumbnail_html', $post_id, $post_thumbnail_id, $size );
-			
-		} else {
+		if ( is_admin() )
+			return $meta_value;
 		
-			$html = '';
-			
-		}
-		
-		return $html;
+		if ( $meta_key != '_thumbnail_id')
+			return $meta_value;
 
-	}
-	
+		$override = esc_attr( get_post_meta( $post_id , '_simple_featured_video_override' , true ) );
+							
+		if ( $override != 'yes' )
+			return $meta_value;
+						
+		$meta_value = get_post_meta( $post_id , '_simple_featured_video_attachment_id' , true );
+				
+		return $meta_value;
+
+	}	
 	
 }
 
