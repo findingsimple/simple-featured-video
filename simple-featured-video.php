@@ -101,7 +101,7 @@ class Simple_Featured_Video {
 	?>		
 		
 		<?php if ( !empty( $featured_video_thumbnail ) ) { ?>
-		<img src='<?php echo $featured_video_thumbnail; ?>' alt='' style="width:100%;" />
+		<a href="<?php echo $featured_video_link; ?>" title="" target="_blank" style="display:block;padding-top:4px;" ><img src='<?php echo $featured_video_thumbnail; ?>' alt='' style="display:block;width:100%;" /></a>
 		<?php } ?>
 		
 		<p>
