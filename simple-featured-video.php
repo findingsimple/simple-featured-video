@@ -71,7 +71,7 @@ class Simple_Featured_Video {
 	}
 
 	/* Adds custom meta boxes to the theme settings page. */
-	public static function simple_mlmb_add_meta_box() {
+	public static function simple_featured_video_add_meta_box() {
 
 		/* Add a custom meta box. */
 		add_meta_box(
@@ -79,8 +79,8 @@ class Simple_Featured_Video {
 			__( 'Featured Video', self::$text_domain  ),
 			array( __CLASS__, 'simple_featured_video_display' ),			
 			'post',
-			'normal',
-			'low'
+			'side',
+			'default'
 		);
 		
 	}
@@ -95,15 +95,21 @@ class Simple_Featured_Video {
 		wp_nonce_field( basename( __FILE__ ), 'simple-featured-video-nonce' );
 								
 		$featured_video_link = esc_attr( get_post_meta( $object->ID, '_simple_featured_video_link' , true) ); 
+		
+		$featured_video_thumbnail = esc_attr( get_post_meta( $object->ID , '_simple_featured_video_thumbnail' , true ) );
 																					
 	?>		
-
+		
+		<?php if ( !empty( $featured_video_thumbnail ) ) { ?>
+		<img src='<?php echo $featured_video_thumbnail; ?>' alt='' style="width:100%;" />
+		<?php } ?>
+		
 		<p>
 			<label for="featured-video-link"><?php _e( 'Video Link:', self::$text_domain ); ?></label>
 			<br />
 			<input name='featured-video-link' id='featured-video-link' value='<?php echo $featured_video_link ?>' class="widefat" />	
 			<br />
-			<span style="color:#aaa;">Supports Youtube and Vimeo</span>
+			<span style="color:#aaa;">Supports Youtube and Vimeo (non vanity urls)</span>
 		</p>
 						
 	<?php
@@ -114,18 +120,29 @@ class Simple_Featured_Video {
 	 * Saves the featured video meta box settings as post metadata.
 	 *
 	 */
-	public static function simple_mlmb_save( $post_id, $post ) {
+	public static function simple_featured_video_save( $post_id, $post ) {
+		
+		$post_type = $post->post_type;
+		
+	    /* don't run if this is an auto save */
+		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE )
+			return;
+				
+		/* don't run if the function is called for saving revision - default wp doesn't save meta with revisions */
+		if ( $post_type == 'revision' )
+			return;
 
 		/* Verify the nonce before proceeding. */
 		if ( !isset( $_POST['simple-featured-video-nonce'] ) || !wp_verify_nonce( $_POST['simple-featured-video-nonce'], basename( __FILE__ ) ) )
 			return $post_id;
-
+			
 		/* Check if the current user has permission to edit the post. */
 		if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
 			return $post_id;
 
 		$meta = array(
-			'_simple_featured_video_link' => strip_tags( $_POST['featured-video-link'] )
+			'_simple_featured_video_link' => strip_tags( $_POST['featured-video-link'] ),
+			'_simple_featured_video_thumbnail' => self::maybe_get_video_thumbnail_uri( strip_tags( $_POST['featured-video-link'] ) , $post_id )
 		);
 		
 		foreach ( $meta as $meta_key => $new_meta_value ) {
@@ -147,6 +164,149 @@ class Simple_Featured_Video {
 		}
 		
 	}
+	
+
+	/**
+	 * X
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */
+	function maybe_get_video_thumbnail_uri( $video_uri, $post_id ) {
+	
+		$current_video_uri = get_post_meta( $post_id , '_simple_featured_video_link' , true );
+		
+		// if the video hasn't changed don't re-determine the thumbnail url
+		if ( $current_video_uri == $video_uri ) {
+			return get_post_meta( $post_id , '_simple_featured_video_thumbnail' , true );
+		} else {		
+			return self::get_video_thumbnail_uri( $video_uri ); 
+		}
+				
+	}
+
+	/**
+	 * XXX
+	 * 
+	 * @since 1.0
+	 * @author Jason COnroy
+	 */
+	function get_video_thumbnail_uri( $video_uri ) {
+	
+		$thumbnail_uri = '';
+		
+		// determine the type of video and the video id
+		$video = self::parse_video_uri( $video_uri );
+		
+		// get youtube thumbnail
+		if ( $video['type'] == 'youtube' )
+			$thumbnail_uri = 'http://img.youtube.com/vi/' . $video['id'] . '/hqdefault.jpg';
+		
+		// get vimeo thumbnail
+		if( $video['type'] == 'vimeo' )
+			$thumbnail_uri = self::get_vimeo_thumbnail_uri( $video['id'] );
+		
+		// get default/placeholder thumbnail
+		if( empty( $thumbnail_uri ) || is_wp_error( $thumbnail_uri ) )
+			$thumbnail_uri = ''; 
+		
+		//return thumbnail uri
+		return $thumbnail_uri;
+		
+	}
+
+	/**
+	 * XXX
+	 * 
+	 * @since 1.0
+	 * @author Jason COnroy
+	 */
+	function parse_video_uri( $url ) {
+		
+		// Parse the url 
+		$parse = parse_url( $url );
+		
+		// Set blank variables
+		$video_type = '';
+		$video_id = '';
+		
+		// Url is http://youtu.be/xxxx
+		if ( $parse['host'] == 'youtu.be' ) {
+		
+			$video_type = 'youtube';
+			
+			$video_id = ltrim( $urls['path'],'/' );	
+			
+		}
+		
+		// Url is http://www.youtube.com/watch?v=xxxx 
+		// or http://www.youtube.com/watch?feature=player_embedded&v=xxx
+		// or http://www.youtube.com/embed/xxxx
+		if ( ( $parse['host'] == 'youtube.com' ) || ( $parse['host'] == 'www.youtube.com' ) ) {
+		
+			$video_type = 'youtube';
+			
+			parse_str( $parse['query'] );
+			
+			$video_id = $v;	
+			
+			if ( !empty( $feature ) )
+				$video_id = end( explode( 'v=', $parse['query'] ) );
+				
+			if ( strpos( $parse['path'], 'embed' ) == 1 )
+				$video_id = end( explode( '/', $parse['path'] ) );
+			
+		}
+		
+		// Url is http://www.vimeo.com
+		if ( ( $parse['host'] == 'vimeo.com' ) || ( $parse['host'] == 'www.vimeo.com' ) ) {
+		
+			$video_type = 'vimeo';
+			
+			$video_id = ltrim( $parse['path'],'/' );	
+						
+		}
+		
+		// If recognised type return video array
+		if ( !empty( $video_type ) ) {
+		
+			$video_array = array(
+				'type' => $video_type,
+				'id' => $video_id
+			);
+		
+			return $video_array;
+			
+		} else {
+		
+			return false;
+			
+		}
+		
+	}	
+
+
+	/**
+	 * Takes a Vimeo video/clip ID and calls the Vimeo API v2 to get the large thumbnail URL.
+	 * 
+	 * @since 1.0
+	 * @author Brent Shepherd
+	 */
+	function get_vimeo_thumbnail_uri( $clip_id ) {
+
+		$vimeo_api_uri = 'http://vimeo.com/api/v2/video/' . $clip_id . '.php';
+
+		$vimeo_response = wp_remote_get( $vimeo_api_uri );
+
+		if( is_wp_error( $vimeo_response ) ) {
+			return $vimeo_response;
+		} else {
+			$vimeo_response = unserialize( $vimeo_response['body'] );
+			return $vimeo_response[0]['thumbnail_large'];
+		}
+		
+	}	
+	
 	
 }
 
