@@ -425,12 +425,12 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason Conroy
 	 */	 	
-	public static function link_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr ) {
+	public static function link_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr, $force_link ) {
 				
 		$featured_video_link_to_video = esc_attr( get_post_meta( $post_id , '_simple_featured_video_link_to_video' , true ) );
 
-		if ( $featured_video_link_to_video != 'yes' )
-		 	return $html;	
+		if ( ( $featured_video_link_to_video != 'yes' ) && ( !$force_link ) )
+		 	return $html;
 		
 		$video = self::parse_video_uri( get_post_meta( $post_id , '_simple_featured_video_url' , true ) );		
 		
@@ -523,7 +523,9 @@ class Simple_Featured_Video {
 			
 		}
 		
-		return apply_filters( 'post_video_html', $html, $post_id, $post_video_attachment_id, $size, $attr );
+		$force_link = true;
+		
+		return apply_filters( 'post_video_html', $html, $post_id, $post_video_attachment_id, $size, $attr, $force_link );
 		
 	}
 
