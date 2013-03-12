@@ -457,8 +457,103 @@ class Simple_Featured_Video {
 		return $html;
 		
 	}
+
+	/**
+	 * Check if post has a video
+	 *
+	 * Works same as http://codex.wordpress.org/Function_Reference/has_post_thumbnail
+	 * 
+	 * @since 1.0
+	 * @author Jason Conroy
+	 */	 
+	function has_post_video( $post_id = null ) {
 	
+		return ( bool ) get_post_video_thumbnail_id( $post_id );
+		
+	}	
+
+	/**
+	 * Retrieve Post Featured Video ID.
+	 *
+	 * @param int $post_id Optional. Post ID.
+	 * @return int
+	 * @since 1.0
+	 */
+	function get_post_video_thumbnail_id( $post_id = null ) {
 	
+		$post_id = ( null === $post_id ) ? get_the_ID() : $post_id;
+		
+		return get_post_meta( $post_id, '_simple_featured_video_attachment_id', true );
+		
+	}
+		
+	/**
+	 * Display Post Feature Video Thumbnail.
+	 *
+	 */
+	function the_post_video( $size = 'post-thumbnail', $attr = '' ) {
+	
+		echo get_the_post_video( null, $size, $attr );
+		
+	}
+	
+	/**
+	 * Retrieve Post video thumbnail.
+	 *
+	 */
+	function get_the_post_video( $post_id = null, $size = 'post-thumbnail', $attr = ''  ) {
+	
+		$post_id = ( null === $post_id ) ? get_the_ID() : $post_id;
+		
+		$post_video_attachment_id = get_post_video_thumbnail_id( $post_id );
+		
+		if ( $post_video_attachment_id ) {
+		
+			do_action( 'begin_fetch_post_video_html', $post_id, $post_video_attachment_id );
+
+			if ( in_the_loop() )
+				update_post_video_thumbnail_cache();
+				
+			$html = wp_get_attachment_image( $post_video_attachment_id, $size, false, $attr );
+			
+			do_action( 'end_fetch_post_video_html', $post_id, $post_video_attachment_id );
+			
+		} else {
+		
+			$html = '';
+			
+		}
+		
+		return apply_filters( 'post_video_html', $html, $post_id, $post_video_attachment_id, $size, $attr );
+		
+	}
+
+	/**
+	 * Update cache for video thumbnails in the current loop
+	 *
+	 */
+	function update_post_video_thumbnail_cache( $wp_query = null ) {
+
+		if ( ! $wp_query )
+			$wp_query = $GLOBALS['wp_query'];
+
+		if ( $wp_query->thumbnails_cached )
+			return;
+
+		$thumb_ids = array();
+	
+		foreach ( $wp_query->posts as $post ) {
+			if ( $id = get_post_video_thumbnail_id( $post->ID ) )
+				$thumb_ids[] = $id;
+		}
+
+		if ( ! empty ( $thumb_ids ) ) {
+			_prime_post_caches( $thumb_ids, false, true );
+		}
+
+		$wp_query->thumbnails_cached = true;
+	
+	}	
 	
 	
 }
