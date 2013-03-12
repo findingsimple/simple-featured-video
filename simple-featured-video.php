@@ -73,7 +73,7 @@ class Simple_Featured_Video {
 		
 		/* Link thumbnail to the video */
 		add_filter( 'post_thumbnail_html', array( __CLASS__, 'link_thumbnail' ), 10, 5 );
-		add_filter( 'post_video_html', array( __CLASS__, 'link_thumbnail' ), 10, 5 );
+		add_filter( 'post_video_html', array( __CLASS__, 'link_thumbnail' ), 10, 6 );
 		
 	}
 
