@@ -466,7 +466,7 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason Conroy
 	 */	 
-	function has_post_video( $post_id = null ) {
+	public function has_post_video( $post_id = null ) {
 	
 		return ( bool ) get_post_video_thumbnail_id( $post_id );
 		
@@ -479,7 +479,7 @@ class Simple_Featured_Video {
 	 * @return int
 	 * @since 1.0
 	 */
-	function get_post_video_thumbnail_id( $post_id = null ) {
+	public function get_post_video_thumbnail_id( $post_id = null ) {
 	
 		$post_id = ( null === $post_id ) ? get_the_ID() : $post_id;
 		
@@ -491,7 +491,7 @@ class Simple_Featured_Video {
 	 * Display Post Feature Video Thumbnail.
 	 *
 	 */
-	function the_post_video( $size = 'post-thumbnail', $attr = '' ) {
+	public function the_post_video( $size = 'post-thumbnail', $attr = '' ) {
 	
 		echo get_the_post_video( null, $size, $attr );
 		
@@ -501,7 +501,7 @@ class Simple_Featured_Video {
 	 * Retrieve Post video thumbnail.
 	 *
 	 */
-	function get_the_post_video( $post_id = null, $size = 'post-thumbnail', $attr = ''  ) {
+	public function get_the_post_video( $post_id = null, $size = 'post-thumbnail', $attr = ''  ) {
 	
 		$post_id = ( null === $post_id ) ? get_the_ID() : $post_id;
 		
@@ -532,7 +532,7 @@ class Simple_Featured_Video {
 	 * Update cache for video thumbnails in the current loop
 	 *
 	 */
-	function update_post_video_thumbnail_cache( $wp_query = null ) {
+	public function update_post_video_thumbnail_cache( $wp_query = null ) {
 
 		if ( ! $wp_query )
 			$wp_query = $GLOBALS['wp_query'];
