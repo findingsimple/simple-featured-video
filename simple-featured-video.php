@@ -262,7 +262,7 @@ class Simple_Featured_Video {
 	 * XXX
 	 * 
 	 * @since 1.0
-	 * @author Jason COnroy
+	 * @author Jason Conroy
 	 */
 	public static function parse_video_uri( $url ) {
 		
@@ -443,7 +443,7 @@ class Simple_Featured_Video {
 		/* Check for existing <a></a> tags - e.g. embedded by Justin Tadlock's "Get The Image" plugin/extension */
 		if ( strpos( $html , '<a href=' ) === false ) {
 						
-			$html = '<a class="feature-video" href="' . $url . '" >' . $html . $tail;
+			$html = '<a class="feature-video" href="' . $url . '" >' . $html . '</a>';
 		
 		} else {
 
