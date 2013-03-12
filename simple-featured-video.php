@@ -425,7 +425,7 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason Conroy
 	 */	 	
-	public static function link_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr, $force_link ) {
+	public static function link_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr, $force_link = false ) {
 				
 		$featured_video_link_to_video = esc_attr( get_post_meta( $post_id , '_simple_featured_video_link_to_video' , true ) );
 
