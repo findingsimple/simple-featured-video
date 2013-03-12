@@ -468,7 +468,7 @@ class Simple_Featured_Video {
 	 */	 
 	public function has_post_video( $post_id = null ) {
 	
-		return ( bool ) get_post_video_thumbnail_id( $post_id );
+		return ( bool ) self::get_post_video_thumbnail_id( $post_id );
 		
 	}	
 
@@ -493,7 +493,7 @@ class Simple_Featured_Video {
 	 */
 	public function the_post_video( $size = 'post-thumbnail', $attr = '' ) {
 	
-		echo get_the_post_video( null, $size, $attr );
+		echo self::get_the_post_video( null, $size, $attr );
 		
 	}
 	
@@ -505,14 +505,14 @@ class Simple_Featured_Video {
 	
 		$post_id = ( null === $post_id ) ? get_the_ID() : $post_id;
 		
-		$post_video_attachment_id = get_post_video_thumbnail_id( $post_id );
+		$post_video_attachment_id = self::get_post_video_thumbnail_id( $post_id );
 		
 		if ( $post_video_attachment_id ) {
 		
 			do_action( 'begin_fetch_post_video_html', $post_id, $post_video_attachment_id );
 
 			if ( in_the_loop() )
-				update_post_video_thumbnail_cache();
+				self::update_post_video_thumbnail_cache();
 				
 			$html = wp_get_attachment_image( $post_video_attachment_id, $size, false, $attr );
 			
@@ -543,7 +543,7 @@ class Simple_Featured_Video {
 		$thumb_ids = array();
 	
 		foreach ( $wp_query->posts as $post ) {
-			if ( $id = get_post_video_thumbnail_id( $post->ID ) )
+			if ( $id = self::get_post_video_thumbnail_id( $post->ID ) )
 				$thumb_ids[] = $id;
 		}
 
