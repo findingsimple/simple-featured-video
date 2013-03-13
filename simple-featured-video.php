@@ -428,6 +428,8 @@ class Simple_Featured_Video {
 	public static function link_thumbnail( $html, $post_id, $post_thumbnail_id, $size, $attr, $force_link = false ) {
 				
 		$featured_video_link_to_video = esc_attr( get_post_meta( $post_id , '_simple_featured_video_link_to_video' , true ) );
+		
+		$span = '<span></span>';
 
 		if ( ( $featured_video_link_to_video != 'yes' ) && ( !$force_link ) )
 		 	return $html;
@@ -443,7 +445,7 @@ class Simple_Featured_Video {
 		/* Check for existing <a></a> tags - e.g. embedded by Justin Tadlock's "Get The Image" plugin/extension */
 		if ( strpos( $html , '<a href=' ) === false ) {
 						
-			$html = '<a class="featured-video" href="' . $url . '" >' . $html . '</a>';
+			$html = '<a class="featured-video" href="' . $url . '" >' . $html . $span . '</a>';
 		
 		} else {
 
