@@ -158,8 +158,8 @@ class Simple_Featured_Video {
 			return $post_id;
 			
 		/* Check if the current user has permission to edit the post. */
-		if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
-			return $post_id;
+		//if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+		//	return $post_id;
 
 		$meta = array();
 		
