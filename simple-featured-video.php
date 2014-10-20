@@ -33,7 +33,6 @@ if ( ! class_exists( 'Simple_Featured_Video' ) ) :
  * should not be initialized until after the plugins_loaded and after_setup_theme hooks.
  * However, it also needs to run early on the init hook.
  *
- * @author Jason Conroy <jason@findingsimple.com>
  * @package Simple Featured Video
  * @since 1.0
  */
@@ -46,7 +45,6 @@ add_action( 'init', 'initialize_featured_video', -1 );
  * Plugin Main Class.
  *
  * @package Simple Featured Video
- * @author Jason Conroy <jason@findingsimple.com>
  * @since 1.0
  */
 class Simple_Featured_Video {
@@ -145,7 +143,7 @@ class Simple_Featured_Video {
 		
 		$post_type = $post->post_type;
 		
-	    /* don't run if this is an auto save */
+		/* don't run if this is an auto save */
 		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE )
 			return;
 				
@@ -191,7 +189,7 @@ class Simple_Featured_Video {
 	
 
 	/**
-	 * X
+	 * Maybe get the video thumbnail
 	 * 
 	 * @since 1.0
 	 * @author Jason Conroy
@@ -378,8 +376,8 @@ class Simple_Featured_Video {
 	 * @since 1.0
 	 * @author Jason Conroy
 	 */	
-    public static function get_attachment_id_from_src( $image_src ) {
-    
+	public static function get_attachment_id_from_src( $image_src ) {
+	
 		global $wpdb;
 		
 		$query = $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE guid = %s", $image_src );
@@ -391,7 +389,7 @@ class Simple_Featured_Video {
 		else
 			return false;
 		
-    }
+	}
  
 
 	/**
@@ -411,8 +409,8 @@ class Simple_Featured_Video {
 		$override = esc_attr( get_post_meta( $post_id , '_simple_featured_video_override' , true ) );
 							
 		if ( $override != 'yes' )
-		 	return $meta_value;
-		 	
+			return $meta_value;
+			
 		$meta_value = get_post_meta( $post_id , '_simple_featured_video_attachment_id' , true );
 		
 		return $meta_value;
@@ -432,7 +430,7 @@ class Simple_Featured_Video {
 		$span = '<span></span>';
 
 		if ( ( $featured_video_link_to_video != 'yes' ) && ( !$force_link ) )
-		 	return $html;
+			return $html;
 		
 		$video = self::parse_video_uri( get_post_meta( $post_id , '_simple_featured_video_url' , true ) );		
 		
